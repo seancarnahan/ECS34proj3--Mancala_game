@@ -1,36 +1,62 @@
 CXX=g++
 
-INCLUDE= I src/
-CXXFLAGS= -std=c++14 $(INCLUDE)
-TESTLDFLAGS = -L /opt/local/blib -lgtest -lgtest_main -lpthread
+INC_DIR = ./include
+SRC_DIR = ./src
+OBJ_DIR = ./obj
+BIN_DIR = ./bin
+TESTBIN_DIR = ./testbin
 
-all: directories testbin/proj3test bin/mancala
+UNAME := $(shell uname)
 
-bin/mancala: obj.main.o obj/MancalaBoard.o
-	$(CXX) -std=c++14 obj/main.o obj/MancalaBoard.o -o bin/mancala
+PKGS =
 
-testbin/proj3test: obj/testmancala.o obj/MancalaBoard.o
-	$(CXX) -std=c++14 obj/testmancala.o onj/MancalaBoard.o -o testbin/proj3test $(TESTLDFLAGS)
+#DEBUG_MODE =TRUE
+ifdef DEBUG_MODE
+DEFINES += -DDEBUG
+CFLAGS += -g -ggdb -D_GLIBCXX_DEBUG
+else
+CFLAGS += -O3
+endif
 
-obj/main.o: src/main.cpp src/MancalaBoard.h
-	$(CXX) $(CXXFLAGS) -c src/main.cpp -o obj/main.o
+ifeq ($(UNAME), Darwin)
+#add paths if developing on mac with macports
+INCLUDE += -I 'opt/local/include'
+TESTLDFLAGS += -L '/opt/local/lib'
+endif
 
-obj/MancalaBoard.o: src/MancalaBoard.cpp src/MancalaBoard.h
-	$(CXX) $(CXXFLAGS) -c src/MancalaBoard.cpp -o obj/MancalaBoard.o
+INCLUDE += -I $(INC_DIR)
+CFLAGS += -Wall
+LDFLAGS +=
+TESTLDFLAGS += -lgtest -lgtest_main -lpthread
+CPPFLAGS += -std=c++14
+PROJ_NAME = proj3
+TESTMANCALA_NAME = testmancala
 
-obj/testmancala.o: src/testmancala.cpp src/MancalaBoard.h
-	$(CXX) $(CXXFLAGS) -c src/testmancala.cpp -o obj/testmancala.o
+MAIN_OBJ = $(OBJ_DIR)/main.o
+TEST_OBJ = $(OBJ_DIR)/testmancala.o
+PROJ_OBJ = $(OBJ_DIR)/MancalaBoard.o
 
-directories: obj/ bin/ testbin/
+all: directories test $(BIN_DIR)/$(PROJ_NAME)
 
-obj/:
-	mkdir obj/
+test: $(TESTBIN_DIR)/$(TESTMANCALA_NAME)
+	$(TESTBIN_DIR)/$(TESTMANCALA_NAME)
 
-bin/:
-	mkdir bin/
+$(BIN_DIR)/$(PROJ_NAME): $(PROJ_OBJ) $(MAIN_OBJ)
+	$(CXX) $(MAIN_OBJ) $(PROJ_OBJ) -o $(BIN_DIR)/$(PROJ_NAME) $(CFLAGS) $(CPPFLAGS) $(DEFINES) -L ./googletest/build/lib $(LDFLAGS)
 
-testbin/:
-	mkdir testbin/
+$(TESTBIN_DIR)/$(TESTMANCALA_NAME): $(PROJ_OBJ) $(TEST_OBJ)
+	$(CXX) $(PROJ_OBJS) $(TEST_OBJ) -o $(TESTBIN_DIR)/$(TESTMANCALA_NAME) $(CFLAGS) $(CPPFLAGS) $(DEFINES) -L ./googletest/build/lib $(LDFLAGS)
 
-clean:
-	rm obj/*
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) $(DEFINES) $(INCLUDE) -I ./googletest/googletest/include -c $< -o $@
+
+.PHONY: directories
+directories:
+	mkdir -p $(BIN_DIR)
+	mkdir -p $(OBJ_DIR)
+	mkdir -p $(TESTBIN_DIR)
+
+clean::
+	-rm $(OBJ_DIR)/*.o $(INC_DIR)/*.*~ $(SRC_DIR)/*.*~
+
+.PHONY: clean
