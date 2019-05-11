@@ -45,7 +45,7 @@ $(BIN_DIR)/$(PROJ_NAME): $(PROJ_OBJ) $(MAIN_OBJ)
 	$(CXX) $(MAIN_OBJ) $(PROJ_OBJ) -o $(BIN_DIR)/$(PROJ_NAME) $(CFLAGS) $(CPPFLAGS) $(DEFINES) -L ./googletest/build/lib $(LDFLAGS)
 
 $(TESTBIN_DIR)/$(TESTMANCALA_NAME): $(PROJ_OBJ) $(TEST_OBJ)
-	$(CXX) $(PROJ_OBJS) $(TEST_OBJ) -o $(TESTBIN_DIR)/$(TESTMANCALA_NAME) $(CFLAGS) $(CPPFLAGS) $(DEFINES) -L ./googletest/build/lib $(LDFLAGS)
+	$(CXX) $(PROJ_OBJ) $(TEST_OBJ) -o $(TESTBIN_DIR)/$(TESTMANCALA_NAME) $(CFLAGS) $(CPPFLAGS) $(DEFINES) -L ./googletest/build/lib $(TESTLDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $(DEFINES) $(INCLUDE) -I ./googletest/googletest/include -c $< -o $@
