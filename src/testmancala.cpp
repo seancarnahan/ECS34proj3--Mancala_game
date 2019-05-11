@@ -4,7 +4,7 @@
 TEST(MancalaBoardTest, DefaultBoardTest){
     // Needs to test that default board is correct
     CMancalaBoard newBoard;
-    EXPECT_EQ(DTurn, 0);
+    EXPECT_EQ(newBoard.PlayerTurn(), 0);
 
 }
 
