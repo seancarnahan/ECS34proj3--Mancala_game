@@ -127,7 +127,7 @@ TEST(MancalaBoardTest, ScoringMoveTest){
     CMancalaBoard newBoard;
 
     EXPECT_EQ(newBoard.PlayerTurn(), 0);
-    newBoard.Move(0, 1);
+    newBoard.Move(0, 4);
     EXPECT_EQ(newBoard.ToString(),
 
         "P1          PITS\n"
@@ -280,11 +280,11 @@ TEST(MancalaBoardTest, DoubleMoveTest){
 
 TEST(MancalaBoardTest, StealMoveTest){
     // Needs to test that stealing move works correctly
-    
+
 
     int pits[] = {0,1,0,0,4,1,0,7,0,0};
     int scores[] = {0,0};
-    CMancalaBoard newBoard(1, pits, scores);
+    CMancalaBoard newBoard(0, pits, scores);
     EXPECT_EQ(newBoard.ToString(),
 
         "P1          PITS\n"
@@ -297,8 +297,8 @@ TEST(MancalaBoardTest, StealMoveTest){
         "      1   2   3   4   5\n"
         "             PITS          P2\n");
 
-    EXPECT_EQ(newBoard.PlayerTurn(), 1);
-    newBoard.Move(1, 1);
+    EXPECT_EQ(newBoard.PlayerTurn(), 0);
+    newBoard.Move(0, 1);
     EXPECT_EQ(newBoard.ToString(),
 
         "P1          PITS\n"
