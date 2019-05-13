@@ -1,6 +1,7 @@
 #include "MancalaBoard.h"
 #include <iostream>
-
+#include <ostream>
+#include <string>
 
 //Default constructor should initialize the board
 CMancalaBoard::CMancalaBoard(){
@@ -34,11 +35,11 @@ void CMancalaBoard::ResetBoard(){
 }
 
 //returns which players turn it is
-//players are 0 and 1
-//should increment turn, should use modulo of the current DTurn
-//actually the increment should be done in move instead
 int CMancalaBoard::PlayerTurn() const{
-    return DTurn;
+  if (GameOver()) {
+    return -1;
+  }
+  return DTurn;
 }
 
 
@@ -49,45 +50,61 @@ int CMancalaBoard::PlayerTurn() const{
 // -1 should be returned on bad parameter
 //TODO: check if valid player
 int CMancalaBoard::PlayerScore(int player) const{
-    return DStores[player];
+  if (player < 0 || player >= MANCALA_PLAYERS) {
+    return -1;
+  }
+  return DStores[player];
 }
 
-//TODO: New Method  returns the index within DPits[] for the given player and pit
-//TODO: check if valid player
-//TODO: check if valid pit
-//TODO: check if valid pit for player
-//TODO: check if this is a valid index. if it isnt return -1;
+/**
+ * Returns the index in DPits for the given (player, pit)
+ * Player must be a valid player and pit must be valid.
+ * This will return a number between 0 and (MANCALA_PLAYERS * MANCALA_PIT_SLOTS)
+ * Otherwise return -1
+ */
 int CMancalaBoard::GetPitIndex(int player, int pit){
-  return player * MANCALA_PIT_SLOTS + pit;
+  if (player < 0 || player >= MANCALA_PLAYERS) {
+    return -1;
+  }
+  if (pit < 0 || pit >= MANCALA_PIT_SLOTS) {
+    return -1;
+  }
+  return (player * MANCALA_PIT_SLOTS) + pit;
 }
 
-
-//returns the number of stones in a player's pit
-//returns -1 on a bad parameter
-//TODO: if index is not -1
+/**
+ * Return the number of stones in the given (player, pit)
+ */
 int CMancalaBoard::PitStoneCount(int player, int pit){
-    return DPits[player * MANCALA_PIT_SLOTS + pit];
+  int idx = GetPitIndex(player, pit);
+  if (idx < 0) {
+    return -1;
+  }
+  return DPits[idx];
 }
 
 //returns True if the game is over
 //TODO: this looks ok
 bool CMancalaBoard::GameOver() const{
-    for(int Index = 0; MANCALA_TOTAL_PITS; Index++){
-        if(DPits[Index]){
-            return false;
-        }
+  for(int Index = 0; Index < MANCALA_TOTAL_PITS; Index++){
+    if (DPits[Index] > 0){
+      return false;
     }
-    return true;
+  }
+  return true;
 }
 
 //returns string representation form of the board
 //TODO: check the string
 std::string CMancalaBoard::ToString() const{
+
+
     std::string ReturnString  = "P1          PITS\n";
     ReturnString += "      5   4   3   2   1\n";
-    ReturnString += "/---------------------------\\\n";
+    ReturnString += R"(/---------------------------\)";
+    ReturnString += "\n";
     ReturnString += "|   |";
-    for(int Index = 0; Index < MANCALA_PIT_SLOTS; Index++){
+    for(int Index = MANCALA_PIT_SLOTS-1; Index >= 0; Index--){
         if(DPits[Index] >= 10){
             ReturnString += std::to_string(DPits[Index]) + " |";
         }
@@ -120,7 +137,8 @@ std::string CMancalaBoard::ToString() const{
         }
     }
     ReturnString += "   |\n";
-    ReturnString += "\\---------------------------/\n";
+    ReturnString += R"(\---------------------------/)";
+    ReturnString += "\n";
     ReturnString += "      1   2   3   4   5\n";
     ReturnString += "             PITS          P2\n";
 
@@ -128,48 +146,7 @@ std::string CMancalaBoard::ToString() const{
 }
 
 CMancalaBoard::operator std::string() const{
-    std::string ReturnString  = "P1          PITS\n";
-    ReturnString += "      5   4   3   2   1\n";
-    ReturnString += "/---------------------------\\\n";
-    ReturnString += "|   |";
-    for(int Index = MANCALA_PIT_SLOTS-1; Index >= 0; Index--){
-        if(DPits[Index] >= 10){
-            ReturnString += std::to_string(DPits[Index]) + " |";
-        }
-        else{
-            ReturnString += std::string(" ") + std::to_string(DPits[Index]) + " |";
-        }
-    }
-    ReturnString += "   |\n|";
-
-    if(DStores[0] >= 10){
-        ReturnString += std::to_string(DStores[0]);
-    }
-    else{
-        ReturnString += std::string(" ") + std::to_string(DStores[0]);
-    }
-    ReturnString += " |-------------------|";
-    if(DStores[1] > 10){
-        ReturnString += std::to_string(DStores[1]);
-    }
-    else{
-        ReturnString += std::string(" ") + std::to_string(DStores[1]);
-    }
-    ReturnString += " |\n|   |";
-    for(int Index = 0; Index < MANCALA_PIT_SLOTS; Index++){
-        if(DPits[MANCALA_PIT_SLOTS + Index] >= 10){
-            ReturnString += std::to_string(DPits[MANCALA_PIT_SLOTS + Index]) + " |";
-        }
-        else{
-            ReturnString += std::string(" ") + std::to_string(DPits[MANCALA_PIT_SLOTS + Index]) + " |";
-        }
-    }
-    ReturnString += "   |\n";
-    ReturnString += "\\---------------------------/\n";
-    ReturnString += "      1   2   3   4   5\n";
-    ReturnString += "             PITS          P2\n";
-
-    return ReturnString;
+  return ToString();
 }
 
 
@@ -199,9 +176,11 @@ CMancalaBoard::operator std::string() const{
 //
 bool CMancalaBoard::Move(int player, int pit){
 
+  int SCORE_DROP = -2;
 
   //first check if the player can move the stones in the given pit
   int PitIndex = GetPitIndex(player, pit);
+  //std::cout<<"Starting move for player["<<player<<"] pit["<<pit<<"]"<<std::endl;
 
   //this logic should move to GetPitIndex
   if((PitIndex < 0) or (PitIndex > MANCALA_TOTAL_PITS)){
@@ -209,6 +188,9 @@ bool CMancalaBoard::Move(int player, int pit){
   }
 
   //check if its this players turn
+  if (DTurn != player) {
+    return false;
+  }
 
   //grabs the stones into hand
   int Stones = PitStoneCount(player, pit);
@@ -217,67 +199,90 @@ bool CMancalaBoard::Move(int player, int pit){
   int LastPitDrop = PitIndex;
 
   //check if empty pit
+  if (Stones <= 0) {
+    return false;
+  }
 
   //take stones out of current pit
   DPits[PitIndex] = 0;
 
   //std::cout<<"@ line "<<__LINE__<<" "<<Stones<<std::endl;
-  while(Stones > 1){
-    PitIndex++;
+  PitIndex++;
+
+  //sets the pit index to zero if gets to 10
+  PitIndex %= MANCALA_TOTAL_PITS;
+
+  while (Stones > 0){
 
     //checks if at the beginning of a row (i.e. the move passes over a store)
     if((PitIndex % MANCALA_PIT_SLOTS) == 0){
 
       //is this the store for this player
-      if(player == (PitIndex / MANCALA_PIT_SLOTS) - 1){
-	DStores[player]++;
-	Stones--;
-      }
-
+      if ( (player == (MANCALA_PLAYERS - 1) && PitIndex == 0) ||
+	     player == (PitIndex / MANCALA_PIT_SLOTS) - 1) {
+	        if (LastPitDrop != SCORE_DROP) {
+	           DStores[player]++;
+	           LastPitDrop = SCORE_DROP;
+	           //std::cout<<" -- At pitindex["<<PitIndex<<"] stones["<<Stones<<"]: turned corner: adding score"<<std::endl;
+	         } else {
+	            DPits[PitIndex]++;
+	            LastPitDrop = PitIndex;
+	            //std::cout<<" -- At pitindex["<<PitIndex<<"] stones["<<Stones<<"]: already scored"<<std::endl;
+	            PitIndex++;
+	         }
+         } else {
+	          DPits[PitIndex]++;
+	          LastPitDrop = PitIndex;
+	          //std::cout<<" -- At pitindex["<<PitIndex<<"] stones["<<Stones<<"]: turned corner: NOT adding score"<<std::endl;
+	          PitIndex++;
+        }
     } else {
-      //do nothing because this is not this player's store
+      DPits[PitIndex]++;
+      LastPitDrop = PitIndex;
+      //std::cout<<" -- At pitindex["<<PitIndex<<"] stones["<<Stones<<"]: regular move"<<std::endl;
+      PitIndex++;
     }
+
+    Stones--;
 
     //sets the pit index to zero if gets to 10
     PitIndex %= MANCALA_TOTAL_PITS;
+  }
 
-    //increments the stones in that pit
-    //decreases the total stones in hand
-    if(Stones){
-      DPits[PitIndex]++;
-      Stones--;
-      LastPitDrop = PitIndex;
+
+  if (LastPitDrop == SCORE_DROP) {
+    //its still my turn
+  } else {
+
+    //check for a steal
+    if (DPits[LastPitDrop] == 1 &&
+	     LastPitDrop >= (player * MANCALA_PIT_SLOTS) &&
+	      LastPitDrop < ( (player+1) * MANCALA_PIT_SLOTS )) {
+
+      //std::cout<<" ---- Doing a steal"<<std::endl;
+      int OppositeSide = MANCALA_TOTAL_PITS - 1  - LastPitDrop;
+      DStores[player] += DPits[OppositeSide] + 1;
+      DPits[OppositeSide] = 0;
+      DPits[LastPitDrop] = 0;
+
+    } else {
+      //do nothing
+    }
+
+    //only 2 players - switch players
+    DTurn = 1 - DTurn;
+
+    //check if DTurn can move
+    bool canMove = false;
+    for (int Index = (DTurn * MANCALA_PIT_SLOTS); Index < ((DTurn + 1) * MANCALA_PIT_SLOTS); Index++) {
+      if (DPits[Index] > 0) {
+	       canMove = true;
+      }
+    }
+    if (!canMove) {
+      DTurn = 1 - DTurn;
     }
 
   }
-
-  //I think this a bug
-  PitIndex++;
-  PitIndex %= MANCALA_TOTAL_PITS;
-
-  //
-  if(DPits[PitIndex] == 0){
-    //std::cout<<"@ line "<<__LINE__<<std::endl;
-    int OppositeSide = MANCALA_TOTAL_PITS - 1  - PitIndex;
-    DStores[player] += DPits[OppositeSide] + 1;
-    DPits[OppositeSide] = 0;
-  }
-  else if(Stones == 1){
-        if((PitIndex % MANCALA_PIT_SLOTS) == 0){
-            if(player == (PitIndex / MANCALA_PIT_SLOTS) - 1){
-                DStores[player]++;
-                Stones--;
-            }
-        }
-        PitIndex %= MANCALA_TOTAL_PITS;
-        if(Stones){
-            DPits[PitIndex]++;
-            Stones--;
-            LastPitDrop = PitIndex;
-        }
-    }
-    if((LastPitDrop == MANCALA_PIT_SLOTS) or (PitIndex != MANCALA_PIT_SLOTS)){
-        DTurn = 1 - DTurn;
-    }
-    return true;
+  return true;
 }
