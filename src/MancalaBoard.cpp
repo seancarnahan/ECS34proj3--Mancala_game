@@ -32,6 +32,11 @@ void CMancalaBoard::ResetBoard(){
     for(int Index = 0; Index < MANCALA_TOTAL_PITS; Index++){
         DPits[Index] = 4;
     }
+
+    for(int Index = 0; Index < MANCALA_PLAYERS; Index++){
+        DStores[Index] = 0;
+    }
+
 }
 
 //returns which players turn it is
